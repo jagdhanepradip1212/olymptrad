@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trading/graph_page.dart';
-import 'package:trading/main.dart';
+// import 'package:trading/main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
