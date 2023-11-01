@@ -151,22 +151,7 @@ class _TradingTabState extends State<TradingTab> {
           ],
         ),
         ),
-        // if (_timer != null && _timer!.isActive)
-        //   Padding(
-        //     padding: const EdgeInsets.all(8.0),
-        //     child: Text("Time Left: $_start"),
-        //   ),
-        // Container(
-        //   padding: const EdgeInsets.all(8.0),
-        //   decoration: BoxDecoration(
-        //     color: Colors.blue,
-        //     borderRadius: BorderRadius.circular(10),
-        //   ),
-        //   child: const Text(
-        //     'Demo Account',
-        //     style: TextStyle(color: Colors.white),
-        //   ),
-        // ),
+       
         Expanded(
           flex: 3,
           child: SfCartesianChart(
