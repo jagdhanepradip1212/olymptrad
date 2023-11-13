@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trading/show_users.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
@@ -21,11 +22,15 @@ class CustomDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
+            leading: Icon(Icons.person_2),
+            title: Text('All Users'),
             onTap: () {
               Navigator.pop(context); // Close the drawer
               // Add navigation logic here
+               Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) =>  UserTable()),
+  );
             },
           ),
           ListTile(

@@ -37,6 +37,10 @@ dependencies:
   cupertino_icons: ^1.0.2
   fl_chart: ^0.64.0
   syncfusion_flutter_charts: ^23.1.43
+  http: ^1.1.0
+  password_strength: ^0.2.0
+  rive: ^0.12.2
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
@@ -61,9 +65,22 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/candle_chart_Down_chart_1_min_20_sec.riv
+
+    - assets/candle_chart_5_min_up.riv
+    - assets/candle_chart_5_min_down.riv
+    
+    - assets/candle_chart_10min_down.riv
+    - assets/candle_chart_10min_up.riv
+
+    - assets/candle_chart_2min_up.riv
+    - assets/candle_chart_2min_down.riv
+    
+    - assets/candle_chart_1_min_up.riv
+
+
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
