@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 class TradesTab extends StatefulWidget {
@@ -29,27 +28,28 @@ class _TradesTabState extends State<TradesTab> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
+             List<TradeData> data = snapshot.data!;
             return ListView.builder(
-              itemCount: snapshot.data!.length,
+              itemCount: data.length,
               itemBuilder: (context, index) {
-                TradeData data = snapshot.data![index];
+                TradeData trade = data[index];
                 return Card(
-                  // Wrapping in a Card for better UI
+                
                   child: ListTile(
-                    title: Text('Winning Side: ${data.winningSide}'),
+                    title: Text('Winning Side: ${trade.winningSide}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Total Up Amount: ${data.totalUpAmount}'),
-                        Text('Total Down Amount: ${data.totalDownAmount}'),
+                        Text('Total Up Amount: ${trade.totalUpAmount}'),
+                        Text('Total Down Amount: ${trade.totalDownAmount}'),
                         Text(
-                            'Amount Taken By Admin: ${data.amountTakenByAdmin}'),
-                        Text('Created At: ${data.createdAt}'),
+                            'Amount Taken By Admin: ${trade.amountTakenByAdmin}'),
+                        Text('Created At: ${trade.createdAt}'),
                         // If earnings is a list of objects, you may want to implement a method to render it suitably
                         // For example, if earnings is a list of strings:
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: data.earnings
+                          children: trade.earnings
                               .map((earning) => Text('Earning: $earning'))
                               .toList(),
                         ),

@@ -38,39 +38,38 @@ class _TradingPageState extends State<TradingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-          appBar: _selectedIndex != 1 && _selectedIndex != 2 && _selectedIndex != 3 ? _buildAppBar() : null, // Conditionally render AppBar
-    drawer: _selectedIndex == 0 ? const CustomDrawer() : null,
-body: Center(
-      child: _widgetOptions.elementAt(_selectedIndex),
-    ),
-     bottomNavigationBar: TabBottomNavigationBar(
-          currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-    ),
-     
+      appBar: _selectedIndex != 1 && _selectedIndex != 2 && _selectedIndex != 3
+          ? _buildAppBar()
+          : null, // Conditionally render AppBar
+      drawer: _selectedIndex == 0 ? const CustomDrawer() : null,
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
+      ),
+      bottomNavigationBar: TabBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
-AppBar _buildAppBar() {
-  return AppBar(
-    title: _selectedIndex == 0
-        ? const Text("Demo account", style: TextStyle(color: Colors.white))
-        : null,
-    backgroundColor: Colors.black,
-    actions: <Widget>[
-      if (_selectedIndex == 0)
-        IconButton(
-          icon: const Icon(Icons.folder_open),
-          onPressed: () {
-            _showAddUserBottomSheet(context);
-          },
-        ),
-    ],
-  );
-}
-  
-}
 
-
+  AppBar _buildAppBar() {
+    return AppBar(
+      title: _selectedIndex == 0
+          ? const Text("Demo account", style: TextStyle(color: Colors.white))
+          : null,
+      backgroundColor: Colors.black,
+      actions: <Widget>[
+        if (_selectedIndex == 0)
+          IconButton(
+            icon: const Icon(Icons.folder_open),
+            onPressed: () {
+              _showAddUserBottomSheet(context);
+            },
+          ),
+      ],
+    );
+  }
+}
 
 void _showAddUserBottomSheet(BuildContext context) {
   showModalBottomSheet(
@@ -141,7 +140,7 @@ class _TradingTabState extends State<TradingTab> {
   int time = 1;
   int money = 10;
 
-  Timer? _timer;
+  List<TimerInfo> _timers = [];
   int _start = 0;
 
   void refreshPage() {
@@ -175,43 +174,69 @@ class _TradingTabState extends State<TradingTab> {
     });
   }
 
-  void startTimer() {
-    const oneSec = Duration(seconds: 1);
-    _timer = Timer.periodic(
-      oneSec,
-      (Timer timer) {
-        if (_start == 0) {
-          setState(() {
-            timer.cancel();
-          });
+  void _startTimer(int minutes) {
+    int initialSeconds = minutes * 60;
+    Timer timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        // Find the TimerInfo instance for this timer and update its remaining seconds
+        var timerInfo = _timers.firstWhere((t) => t.timer == timer);
+        if (timerInfo.remainingSeconds > 0) {
+          timerInfo.remainingSeconds--;
         } else {
-          setState(() {
-            _start--;
-          });
-
-          // When _start is equal to 1, we want to trigger the Rive animation
-          if (time == 1) {
-            // Trigger your Rive animation here
-            // You will likely need to use a state variable to show/hide the Rive animation
-            // For example, you could have a boolean that you set to true to indicate the animation should play
-            // playRiveAnimation = true;
-            setState(() {
-              playRiveAnimation = true;
-            });
-          }
-          // else if (time == 10) {
-          //   setState(() {
-          //     playTenMinRive = true;
-          //   });
-          // }
+          timer.cancel();
         }
+      });
+    });
+
+    _timers.add(TimerInfo(timer, initialSeconds, minutes));
+  }
+
+  void _showTimersBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StreamBuilder<List<TimerInfo>>(
+          stream: _timersStream(), // Create a stream for active timers
+          builder: (context, snapshot) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  var timerInfo = snapshot.data![index];
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Time Remaining for ${timerInfo.minutes} min: ${timerInfo.remainingSeconds} seconds',
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 16, 15, 15),
+                          fontSize: 16),
+                    ),
+                  );
+                },
+              );
+            } else {
+              return Center(
+                child: Text('No active timers'),
+              );
+            }
+          },
+        );
       },
     );
   }
 
+  Stream<List<TimerInfo>> _timersStream() async* {
+    while (_timers.isNotEmpty) {
+      yield _timers.where((timerInfo) => timerInfo.timer.isActive).toList();
+      await Future.delayed(Duration(seconds: 1)); // Update every second
+    }
+  }
+
   @override
   void dispose() {
-    _timer?.cancel();
+    for (var timerInfo in _timers) {
+      timerInfo.timer.cancel();
+    }
     super.dispose();
   }
 
@@ -221,7 +246,7 @@ class _TradingTabState extends State<TradingTab> {
 
     List<Map<String, dynamic>> bets = [
       {
-        'userId': 'Shimple',
+        'userId': 'Pradip',
         'betAmount': money,
         'betType': betType,
       },
@@ -263,7 +288,7 @@ class _TradingTabState extends State<TradingTab> {
 
     List<Map<String, dynamic>> bets = [
       {
-        'userId': 'Pradip',
+        'userId': 'Shimple',
         'betAmount': money,
         'betType': betType,
       },
@@ -387,186 +412,209 @@ class _TradingTabState extends State<TradingTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              if (_timer != null && _timer!.isActive)
-                Text(
-                  "Time Left: $_start",
-                  style: TextStyle(color: Colors.white),
-                ),
-            ],
-          ),
-        ),
-        Expanded(
-            flex: 3,
-            child: Stack(
-              children: <Widget>[
-                SfCartesianChart(
-                  series: const <ChartSeries>[],
-                ),
-                if (playRiveAnimation)
-                  Positioned(child: RiveAnimation.asset(riveFileDName))
-                else if (playRive1MinUpAnima)
-                  Positioned(child: RiveAnimation.asset(riveFileUName))
-                else if (playTenMinRive)
-                  Positioned(child: RiveAnimation.asset(riveTenMinFile))
-                else if (playTenMinUpRive)
-                  Positioned(child: RiveAnimation.asset(riveTenMinUFile))
-                else if (playTwoMinUpRive)
-                  Positioned(child: RiveAnimation.asset(riveTwoMinUpName))
-                else if (playTwoMinDownRive)
-                  Positioned(child: RiveAnimation.asset(riveTwoMinDownName))
-                else if (playFiveMinUpRive)
-                  Positioned(child: RiveAnimation.asset(riveFiveMinUFile))
-              ],
-            )),
-        const SizedBox(height: 12),
-        Expanded(
-          flex: 1,
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildControlRow(
-                      'Time', '${time}min', _increaseTime, _decreaseTime),
-                  const SizedBox(width: 4),
-                  _buildControlRow(
-                      'Money', '\$${money}', _increaseMoney, _decreaseMoney),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top:
-                            12.0), // Adjust the value as needed for the top margin
-                    child: ElevatedButton(
-                      onPressed: () {
-                        pageKey.currentState?.refreshPage();
-                        playRiveAnimation = false;
-                        playRive1MinUpAnima = false;
-                        playTenMinRive = false;
-                        playTenMinUpRive = false;
-                        playTwoMinUpRive = false;
-                        playTwoMinDownRive = false;
-                        // Add your Call button logic here
-                        setState(() {
-                          _start = time * 60;
-                          betType = "";
-                          // Assuming 'time' is in minutes, convert to seconds
-                        });
-                        startTimer();
-                        if (time == 2) {
-                          placeBets('up');
-                          playTwoMinDownRive = true;
-                        } else if (time == 1) {
-                          placeOneBets("up");
-                        } else if (time == 5) {
-                          placeFiveBets("up");
-                        } else if (time == 10) {
-                          placeTenBets("up");
-                          playTenMinRive = true;
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        primary: Colors.green, // Background color
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+    return Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Column(
+              children: [
+// Padding(
+                //   padding: const EdgeInsets.all(8.0),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                //     // children: [
+                //     //   if (_timer != null && _timer!.isActive)
+                //     //     Text(
+                //     //       "Time Left: $_start",
+                //     //       style: TextStyle(color: Colors.white),
+                //     //     ),
+                //     // ],
+                //   ),
+                // ),
+                Expanded(
+                    flex: 3,
+                    child: Stack(
+                      children: <Widget>[
+                        SfCartesianChart(
+                          series: const <ChartSeries>[],
                         ),
+                        if (playRiveAnimation)
+                          Positioned(child: RiveAnimation.asset(riveFileDName))
+                        else if (playRive1MinUpAnima)
+                          Positioned(child: RiveAnimation.asset(riveFileUName))
+                        else if (playTenMinRive)
+                          Positioned(child: RiveAnimation.asset(riveTenMinFile))
+                        else if (playTenMinUpRive)
+                          Positioned(
+                              child: RiveAnimation.asset(riveTenMinUFile))
+                        else if (playTwoMinUpRive)
+                          Positioned(
+                              child: RiveAnimation.asset(riveTwoMinUpName))
+                        else if (playTwoMinDownRive)
+                          Positioned(
+                              child: RiveAnimation.asset(riveTwoMinDownName))
+                        else if (playFiveMinUpRive)
+                          Positioned(
+
+                              child: RiveAnimation.asset(riveFiveMinUFile))
+                      ],
+                    )),
+            
+                const SizedBox(height: 12),
+                Expanded(
+                  flex: 1,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildControlRow('Time', '${time}min', _increaseTime,
+                              _decreaseTime),
+                          const SizedBox(width: 4),
+                          _buildControlRow('Money', '\$${money}',
+                              _increaseMoney, _decreaseMoney),
+                        ],
                       ),
-                      child: RichText(
-                        text: const TextSpan(
-                          children: [
-                            TextSpan(
-                              text: ' Call',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
+                      const SizedBox(height: 22),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top:
+                                    12.0), // Adjust the value as needed for the top margin
+                            child: ElevatedButton(
+                              onPressed: () {
+                                pageKey.currentState?.refreshPage();
+                                playRiveAnimation = false;
+                                playRive1MinUpAnima = false;
+                                playTenMinRive = false;
+                                playTenMinUpRive = false;
+                                playTwoMinUpRive = false;
+                                playTwoMinDownRive = false;
+                                // Add your Call button logic here
+                                setState(() {
+                                  _start = time * 60;
+                                  betType = "";
+                                  // Assuming 'time' is in minutes, convert to seconds
+                                });
+                                _startTimer(time);
+                                if (time == 2) {
+                                  placeBets('up');
+                                  playTwoMinDownRive = true;
+                                } else if (time == 1) {
+                                  placeOneBets("up");
+                                  playRiveAnimation = true;
+                                } else if (time == 5) {
+                                  placeFiveBets("up");
+                                } else if (time == 10) {
+                                  placeTenBets("up");
+                                  playTenMinRive = true;
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: Colors.green, // Background color
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 30, vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: RichText(
+                                text: const TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: ' Call',
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.white),
+                                    ),
+                                    WidgetSpan(
+                                      child: Icon(Icons.arrow_upward,
+                                          size: 16, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            WidgetSpan(
-                              child: Icon(Icons.arrow_upward,
-                                  size: 16, color: Colors.white),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                top:
+                                    12.0), // Adjust the value as needed for the top margin
+                            child: ElevatedButton(
+                              onPressed: () {
+                                pageKey.currentState?.refreshPage();
+                                playRiveAnimation = false;
+                                playRive1MinUpAnima = false;
+                                playTenMinRive = false;
+                                playTwoMinUpRive = false;
+                                playTwoMinDownRive = false;
+                                playFiveMinUpRive = false;
+                                setState(() {
+                                  _start = time * 60;
+                                  betType = "";
+                                  // Assuming 'time' is in minutes, convert to seconds
+                                });
+                                _startTimer(time);
+                                if (time == 2) {
+                                  placeBets('down');
+                                  playTwoMinUpRive = true;
+                                } else if (time == 1) {
+                                  placeOneBets("down");
+                                  playRive1MinUpAnima = true;
+                                } else if (time == 5) {
+                                  placeFiveBets("down");
+                                  playFiveMinUpRive = true;
+                                } else if (time == 10) {
+                                  placeTenBets("down");
+                                  playTenMinUpRive = true;
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: const Color.fromARGB(
+                                    255, 252, 3, 3), // Background color
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 30, vertical: 15),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: RichText(
+                                text: const TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: ' Put',
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.white),
+                                    ),
+                                    WidgetSpan(
+                                      child: Icon(Icons.arrow_downward,
+                                          size: 16, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
+                          )
+                        ],
                       ),
-                    ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top:
-                            12.0), // Adjust the value as needed for the top margin
-                    child: ElevatedButton(
-                      onPressed: () {
-                        pageKey.currentState?.refreshPage();
-                        playRiveAnimation = false;
-                        playRive1MinUpAnima = false;
-                        playTenMinRive = false;
-                        playTwoMinUpRive = false;
-                        playTwoMinDownRive = false;
-                        playFiveMinUpRive = false;
-                        setState(() {
-                          _start = time * 60;
-                          betType = "";
-                          // Assuming 'time' is in minutes, convert to seconds
-                        });
-                        startTimer();
-                        if (time == 2) {
-                          placeBets('down');
-                          playTwoMinUpRive = true;
-                        } else if (time == 1) {
-                          placeOneBets("down");
-                          playRive1MinUpAnima = true;
-                        } else if (time == 5) {
-                          placeFiveBets("down");
-                          playFiveMinUpRive = true;
-                        } else if (time == 10) {
-                          placeTenBets("down");
-                          playTenMinUpRive = true;
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        primary: const Color.fromARGB(
-                            255, 252, 3, 3), // Background color
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: RichText(
-                        text: const TextSpan(
-                          children: [
-                            TextSpan(
-                              text: ' Put',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
-                            ),
-                            WidgetSpan(
-                              child: Icon(Icons.arrow_downward,
-                                  size: 16, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+                ),
+              ],
+            ),
+            Positioned(
+               top: 10, // Adjust the top position as needed
+          right: 10,
+              child: FloatingActionButton(
+                onPressed: _showTimersBottomSheet,
+            child: const Icon(Icons.timer,
+            color: Colors.black,
+            size: 15),
+            ))
+
+          ],
+        ));
   }
 
   Widget _buildControlRow(String label, String value, VoidCallback onIncrease,
@@ -607,4 +655,12 @@ class _TradingTabState extends State<TradingTab> {
       ),
     );
   }
+}
+
+class TimerInfo {
+  Timer timer;
+  int remainingSeconds;
+  int minutes;
+
+  TimerInfo(this.timer, this.remainingSeconds, this.minutes);
 }
